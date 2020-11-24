@@ -53,17 +53,8 @@ class MapProblem(GraphProblem):
 
         # Get the junction (in the map) that is represented by the state to expand.
         junction = self.streets_map[state_to_expand.junction_id]
-        """
-                This is an abstract method that must be implemented by the inheritor class.
-                This method represents the `Succ: S -> P(S)` function (as learnt in class) of the problem.
-                It receives a state and iterates over the successor states.
-                Notice that this is an *Iterator*. Hence it should be implemented using the `yield` keyword.
-                For each successor, an object of type `OperatorResult` is yielded. This object describes the
-                    successor state, the cost of the applied operator and its name.
-        """
+
         for outgoing_link in junction.outgoing_links:
-            # successor_state = MapState(junction.index)
-            # successor_state2 = MapState(outgoing_link.target)
             if outgoing_link is not None:
                 yield OperatorResult(successor_state=MapState(outgoing_link.target),
                                      operator_cost=outgoing_link.distance)
