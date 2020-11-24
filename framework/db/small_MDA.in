@@ -1,0 +1,6 @@
+MDAProblemInput
+small_MDA
+{"report_id": 1, "reporter_name": "Tess Bish", "location": 42531, "nr_roommates": 3};{"report_id": 2, "reporter_name": "Jasmine Denson", "location": 2145, "nr_roommates": 2};{"report_id": 3, "reporter_name": "Jeane Ravencraft", "location": 94797, "nr_roommates": 4};{"report_id": 4, "reporter_name": "Max Neri", "location": 49278, "nr_roommates": 1};{"report_id": 5, "reporter_name": "Kurt Dockstader", "location": 15724, "nr_roommates": 1}
+{"initial_nr_matoshim": 3, "nr_fridges": 5, "fridge_capacity": 3, "drive_gas_consumption_liter_per_meter": 6e-05, "fridges_gas_consumption_liter_per_meter": [0.00012, 6e-05, 0.00018, 0.00018, 0.00024], "initial_location": 58119}
+{"lab_id": 0, "name": "Urquhart-Motto", "max_nr_matoshim": 5, "location": 72193, "tests_transfer_cost": 8.49, "revisit_extra_cost": 0.61};{"lab_id": 1, "name": "Cardone-Neri", "max_nr_matoshim": 4, "location": 3476, "tests_transfer_cost": 9.17, "revisit_extra_cost": 0.57};{"lab_id": 2, "name": "Woolum-Dunmire", "max_nr_matoshim": 5, "location": 59027, "tests_transfer_cost": 7.56, "revisit_extra_cost": 0.74}
+5.45
