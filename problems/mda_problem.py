@@ -79,7 +79,12 @@ class MDAState(GraphProblemState):
         #   (using equals `==` operator) because the class `Junction` explicitly
         #   implements the `__eq__()` method. The types `frozenset`, `ApartmentWithSymptomsReport`, `Laboratory`
         #   are also comparable (in the same manner).
-        raise NotImplementedError  # TODO: remove this line.
+
+        return self.current_site == other.current_site and \
+               self.tests_on_ambulance == other.tests_on_ambulance and \
+               self.tests_transferred_to_lab == other.tests_transferred_to_lab and \
+               self.nr_matoshim_on_ambulance == other.nr_matoshim_on_ambulance and \
+               self.visited_labs == other.visited_labs
 
     def __hash__(self):
         """
@@ -100,8 +105,7 @@ class MDAState(GraphProblemState):
          Notice that `sum()` can receive an *ITERATOR* as argument; That is, you can simply write something like this:
         >>> sum(<some expression using item> for item in some_collection_of_items)
         """
-        raise NotImplementedError  # TODO: remove this line.
-
+        sum(item.nr_roommates for item in self.tests_on_ambulance)
 
 class MDAOptimizationObjective(Enum):
     Distance = 'Distance'
@@ -282,7 +286,14 @@ class MDAProblem(GraphProblem):
                 generated set.
             Note: This method can be implemented using a single line of code. Try to do so.
         """
-        raise NotImplementedError  # TODO: remove this line!
+
+        initial = set(self.problem_input.reported_apartments)
+        to_remove1 = set(state.tests_transferred_to_lab)
+        to_remove2 = set(state.tests_on_ambulance)
+        to_list = list(initial - to_remove1 - to_remove2)
+        to_list.sort(key=lambda a: ApartmentWithSymptomsReport.report_id)
+        return to_list
+
 
     def get_all_certain_junctions_in_remaining_ambulance_path(self, state: MDAState) -> List[Junction]:
         """
