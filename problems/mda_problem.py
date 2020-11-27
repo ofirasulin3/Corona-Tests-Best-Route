@@ -218,13 +218,34 @@ class MDAProblem(GraphProblem):
 
         assert isinstance(state_to_expand, MDAState)
         for outgoing_link in state_to_expand.current_site.outgoing_links:
-            next_place = self.streets_map.get(outgoing_link.target)
-            is_laboratory = isinstance(next_place, Laboratory)
+            next_place: Junction = self.streets_map.get(outgoing_link.target)
+            next_lab = None
+            next_apartment = None
+            is_laboratory = False
+            for lab in self.problem_input.laboratories:
+                if lab.location == next_place:
+                    is_laboratory = True
+                    next_lab = lab
+                    break
+
+            is_apartment = False
+            if not is_laboratory:
+                for apartment in self.problem_input.reported_apartments:
+                    if apartment.location == next_place:
+                        is_apartment = True
+                        next_apartment = apartment
+                        break
+
             if is_laboratory:
-                name = 'go to lab ' + self.problem_input.laboratories[next_place.index]
+                name = 'go to lab ' + next_lab.name
                 new_tests_on_ambulance = frozenset()
-            elif isinstance(next_place, ApartmentWithSymptomsReport):
-                name = 'visit ' + next_place.reporter_name
+            elif is_apartment:
+                # check if we can activate apartment operator
+                if next_apartment not in self.get_reported_apartments_waiting_to_visit(state_to_expand) or \
+                        state_to_expand.get_total_nr_tests_taken_and_stored_on_ambulance() + next_apartment.nr_roommates > \
+                        self.problem_input.ambulance.total_fridges_capacity:
+                    continue
+                name = 'visit ' + next_apartment.reporter_name
                 new_tests_on_ambulance = frozenset({next_place}).union(state_to_expand.tests_on_ambulance)
             else:
                 name = None
@@ -234,14 +255,16 @@ class MDAProblem(GraphProblem):
             new_tests_transfer_to_lab = state_to_expand.tests_transferred_to_lab if not is_laboratory \
                 else frozenset(state_to_expand.tests_transferred_to_lab.union(state_to_expand.tests_on_ambulance))
             new_nr_matoshim = state_to_expand.nr_matoshim_on_ambulance if not is_laboratory \
-                else state_to_expand.nr_matoshim_on_ambulance + next_place.max_nr_matoshim
+                else state_to_expand.nr_matoshim_on_ambulance + next_lab.max_nr_matoshim
 
             new_state = MDAState(next_place,
                                  new_tests_on_ambulance,
                                  new_tests_transfer_to_lab,
                                  new_nr_matoshim,
                                  new_visited_labs)
-            yield OperatorResult(new_state, self.get_operator_cost(state_to_expand, new_state), name)
+            yield OperatorResult(successor_state=new_state,
+                                 operator_cost=self.get_operator_cost(state_to_expand, new_state),
+                                 operator_name=name)
 
     def get_operator_cost(self, prev_state: MDAState, succ_state: MDAState) -> MDACost:
         """
@@ -274,17 +297,22 @@ class MDAProblem(GraphProblem):
             You might find this tip useful for summing a slice of a collection.
         """
 
+        is_laboratory = isinstance(succ_state.current_site, Laboratory)
         # Indicators
-        is_lab_indicator = 1 if isinstance(succ_state.current_site, Laboratory) else 0
+        is_lab_indicator = 1 if is_laboratory else 0
         is_visited_lab_indicator = 1 if is_lab_indicator == 1 and succ_state.visited_labs.__contains__(
             succ_state.current_site.location) else 0
         is_taken_not_empty_indicator = 1 if prev_state.get_total_nr_tests_taken_and_stored_on_ambulance() != 0 else 0
 
         # helpers costs
-        lab_test_transfer_cost = is_lab_indicator * succ_state.current_site.tests_transfer_cost
-        lab_revisit_cost = is_lab_indicator * succ_state.current_site.revisit_extra_cost
-        active_fridges = math.ceil(
-            succ_state.get_total_nr_tests_taken_and_stored_on_ambulance() / self.problem_input.ambulance.fridge_capacity)
+        if is_laboratory:
+            lab_test_transfer_cost = is_lab_indicator * succ_state.current_site.tests_transfer_cost
+            lab_revisit_cost = is_lab_indicator * succ_state.current_site.revisit_extra_cost
+        else:
+            lab_test_transfer_cost = 0
+            lab_revisit_cost = 0
+        active_fridges = math.ceil(succ_state.get_total_nr_tests_taken_and_stored_on_ambulance() /
+                                   self.problem_input.ambulance.fridge_capacity)
         fridges_gas_consumption_per_meter = sum(  # TODO: check the index - #active_fridges or #active_fridges-1
             self.problem_input.ambulance.fridges_gas_consumption_liter_per_meter[:active_fridges - 1])
 
@@ -298,7 +326,7 @@ class MDAProblem(GraphProblem):
                         is_lab_indicator * (is_taken_not_empty_indicator * lab_test_transfer_cost +
                                             is_visited_lab_indicator * lab_revisit_cost)
         test_travel_cost = distance_cost * prev_state.get_total_nr_tests_taken_and_stored_on_ambulance()
-        return MDACost(distance_cost, monetary_cost, test_travel_cost)
+        return MDACost(distance_cost, monetary_cost, test_travel_cost, self.optimization_objective)
 
     def is_goal(self, state: GraphProblemState) -> bool:
         """
@@ -344,9 +372,10 @@ class MDAProblem(GraphProblem):
         # to_list.sort(key=lambda a: ApartmentWithSymptomsReport.report_id)
         # return to_list
         waiting_to_visit = list(set(self.problem_input.reported_apartments) - set(state.tests_transferred_to_lab) -
-                       set(state.tests_on_ambulance))
+                                set(state.tests_on_ambulance))
         waiting_to_visit.sort(key=lambda a: ApartmentWithSymptomsReport.report_id)
         return waiting_to_visit
+
     def get_all_certain_junctions_in_remaining_ambulance_path(self, state: MDAState) -> List[Junction]:
         """
         This method returns a list of junctions that are part of the remaining route of the ambulance.
