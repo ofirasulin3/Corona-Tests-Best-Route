@@ -255,7 +255,7 @@ class MDAProblem(GraphProblem):
             new_tests_transfer_to_lab = state_to_expand.tests_transferred_to_lab if not is_laboratory \
                 else frozenset(state_to_expand.tests_transferred_to_lab.union(state_to_expand.tests_on_ambulance))
             new_nr_matoshim = state_to_expand.nr_matoshim_on_ambulance if not is_laboratory \
-                else state_to_expand.nr_matoshim_on_ambulance + next_lab.max_nr_matoshim
+                else state_to_expand.nr_matoshim_on_ambulance + next_place.max_nr_matoshim
 
             new_state = MDAState(next_place,
                                  new_tests_on_ambulance,

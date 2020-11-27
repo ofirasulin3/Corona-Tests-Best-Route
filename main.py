@@ -141,6 +141,9 @@ def toy_map_problem_experiments():
 
     run_astar_for_weights_in_range(AirDistHeuristic, toy_map_problem)
 
+    exit()  # TODO: remove!
+
+
 # --------------------------------------------------------------------
 # ---------------------------- MDA Problem ---------------------------
 # --------------------------------------------------------------------
@@ -157,7 +160,7 @@ def get_mda_problem(
     assert problem_input_size in {'small', 'moderate', 'big'}
     if problem_input_size not in loaded_problem_inputs_by_size:
         loaded_problem_inputs_by_size[problem_input_size] = MDAProblemInput.load_from_file(
-            f'{problem_input_size}_MDA.in', streets_map)
+            f'{problem_input_size}_mda.in', streets_map)
     problem = MDAProblem(
         problem_input=loaded_problem_inputs_by_size[problem_input_size],
         streets_map=streets_map,
@@ -177,7 +180,7 @@ def basic_mda_problem_experiments():
     #       with it and print the results.
     uc = UniformCost()
     res = uc.solve_problem(small_mda_problem_with_distance_cost)
-    print(res)
+    print
     exit()  # TODO: remove!
 
 
@@ -316,7 +319,7 @@ def mda_problem_anytime_astar_experiments():
 
 def run_all_experiments():
     print('Running all experiments')
-    # toy_map_problem_experiments()
+    toy_map_problem_experiments()
     basic_mda_problem_experiments()
     mda_problem_with_astar_experiments()
     mda_problem_with_weighted_astar_experiments()
