@@ -333,13 +333,16 @@ class MDAProblem(GraphProblem):
             Note: This method can be implemented using a single line of code. Try to do so.
         """
 
-        initial = set(self.problem_input.reported_apartments)
-        to_remove1 = set(state.tests_transferred_to_lab)
-        to_remove2 = set(state.tests_on_ambulance)
-        to_list = list(initial - to_remove1 - to_remove2)
-        to_list.sort(key=lambda a: ApartmentWithSymptomsReport.report_id)
-        return to_list
-
+        # initial = set(self.problem_input.reported_apartments)
+        # to_remove1 = set(state.tests_transferred_to_lab)
+        # to_remove2 = set(state.tests_on_ambulance)
+        # to_list = list(initial - to_remove1 - to_remove2)
+        # to_list.sort(key=lambda a: ApartmentWithSymptomsReport.report_id)
+        # return to_list
+        waiting_to_visit = list(set(self.problem_input.reported_apartments) - set(state.tests_transferred_to_lab) -
+                       set(state.tests_on_ambulance))
+        waiting_to_visit.sort(key=lambda a: ApartmentWithSymptomsReport.report_id)
+        return waiting_to_visit
     def get_all_certain_junctions_in_remaining_ambulance_path(self, state: MDAState) -> List[Junction]:
         """
         This method returns a list of junctions that are part of the remaining route of the ambulance.
