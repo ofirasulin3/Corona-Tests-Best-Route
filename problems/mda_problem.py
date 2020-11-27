@@ -237,25 +237,31 @@ class MDAProblem(GraphProblem):
                         break
 
             if is_laboratory:
+                assert next_lab is not None
+                # check if we can apply laboratory operator
+                if len(state_to_expand.tests_on_ambulance) is 0 and next_lab in state_to_expand.visited_labs:
+                    continue
                 name = 'go to lab ' + next_lab.name
                 new_tests_on_ambulance = frozenset()
+                new_nr_matoshim = state_to_expand.nr_matoshim_on_ambulance + next_lab.max_nr_matoshim
             elif is_apartment:
-                # check if we can activate apartment operator
+                assert next_apartment is not None
+                # check if we can apply apartment operator
                 if next_apartment not in self.get_reported_apartments_waiting_to_visit(state_to_expand) or \
                         state_to_expand.get_total_nr_tests_taken_and_stored_on_ambulance() + next_apartment.nr_roommates > \
                         self.problem_input.ambulance.total_fridges_capacity:
                     continue
                 name = 'visit ' + next_apartment.reporter_name
-                new_tests_on_ambulance = frozenset({next_place}).union(state_to_expand.tests_on_ambulance)
+                new_tests_on_ambulance = state_to_expand.tests_on_ambulance | {next_apartment}
+                new_nr_matoshim = state_to_expand.nr_matoshim_on_ambulance - next_apartment.nr_roommates
             else:
                 name = None
                 new_tests_on_ambulance = state_to_expand.tests_on_ambulance
+                new_nr_matoshim = state_to_expand.nr_matoshim_on_ambulance
             new_visited_labs = state_to_expand.visited_labs if not is_laboratory else \
-                frozenset({next_place}).union(state_to_expand.visited_labs)
+                state_to_expand.visited_labs | {next_place}
             new_tests_transfer_to_lab = state_to_expand.tests_transferred_to_lab if not is_laboratory \
-                else frozenset(state_to_expand.tests_transferred_to_lab.union(state_to_expand.tests_on_ambulance))
-            new_nr_matoshim = state_to_expand.nr_matoshim_on_ambulance if not is_laboratory \
-                else state_to_expand.nr_matoshim_on_ambulance + next_place.max_nr_matoshim
+                else state_to_expand.tests_on_ambulance | state_to_expand.tests_transferred_to_lab
 
             new_state = MDAState(next_place,
                                  new_tests_on_ambulance,
@@ -302,7 +308,7 @@ class MDAProblem(GraphProblem):
         is_lab_indicator = 1 if is_laboratory else 0
         is_visited_lab_indicator = 1 if is_lab_indicator == 1 and succ_state.visited_labs.__contains__(
             succ_state.current_site.location) else 0
-        is_taken_not_empty_indicator = 1 if prev_state.get_total_nr_tests_taken_and_stored_on_ambulance() != 0 else 0
+        is_taken_not_empty_indicator = 1 if len(prev_state.tests_on_ambulance) > 0 else 0
 
         # helpers costs
         if is_laboratory:
@@ -311,7 +317,7 @@ class MDAProblem(GraphProblem):
         else:
             lab_test_transfer_cost = 0
             lab_revisit_cost = 0
-        active_fridges = math.ceil(succ_state.get_total_nr_tests_taken_and_stored_on_ambulance() /
+        active_fridges = math.ceil(prev_state.get_total_nr_tests_taken_and_stored_on_ambulance() /
                                    self.problem_input.ambulance.fridge_capacity)
         fridges_gas_consumption_per_meter = sum(  # TODO: check the index - #active_fridges or #active_fridges-1
             self.problem_input.ambulance.fridges_gas_consumption_liter_per_meter[:active_fridges - 1])
@@ -373,7 +379,7 @@ class MDAProblem(GraphProblem):
         # return to_list
         waiting_to_visit = list(set(self.problem_input.reported_apartments) - set(state.tests_transferred_to_lab) -
                                 set(state.tests_on_ambulance))
-        waiting_to_visit.sort(key=lambda a: ApartmentWithSymptomsReport.report_id)
+        waiting_to_visit.sort(key=lambda a: a.report_id)
         return waiting_to_visit
 
     def get_all_certain_junctions_in_remaining_ambulance_path(self, state: MDAState) -> List[Junction]:
