@@ -45,7 +45,7 @@ class CachedMapDistanceFinder:
          access the `_cache` field directly.
         The cache key should include the source & target indices.
         """
-        if not self._is_in_cache((src_junction.index, tgt_junction.index)):
+        if self._is_in_cache((src_junction.index, tgt_junction.index)):
             return self._get_from_cache((src_junction.index, tgt_junction.index))
         else:
             search_result = self.map_problem_solver.solve_problem(

@@ -209,7 +209,7 @@ class MDAProblem(GraphProblem):
             - The field `self.problem_input.ambulance.total_fridges_capacity`.
             - The method `self.get_reported_apartments_waiting_to_visit()` here.
             - The method `self.get_operator_cost()`.
-            - The c'tor for `AmbulanceState` to create the new successor state.
+            - The c'tor for `MDAState` to create the new successor state.
             - Python's built-in method `frozenset()` to create a new frozen set (for fields that
               expect this type) from another collection (set/list/tuple/iterator).
             - Other fields of the state and the problem input.
@@ -230,13 +230,17 @@ class MDAProblem(GraphProblem):
                 name = None
                 new_tests_on_ambulance = state_to_expand.tests_on_ambulance
             new_visited_labs = state_to_expand.visited_labs if not is_laboratory else \
-                                                    frozenset({next_place}).union(state_to_expand.visited_labs)
+                frozenset({next_place}).union(state_to_expand.visited_labs)
             new_tests_transfer_to_lab = state_to_expand.tests_transferred_to_lab if not is_laboratory \
                 else frozenset(state_to_expand.tests_transferred_to_lab.union(state_to_expand.tests_on_ambulance))
             new_nr_matoshim = state_to_expand.nr_matoshim_on_ambulance if not is_laboratory \
                 else state_to_expand.nr_matoshim_on_ambulance + next_place.max_nr_matoshim
-            new_state = MDAState(next_place, new_tests_on_ambulance, new_tests_transfer_to_lab, new_nr_matoshim, new_visited_labs)
 
+            new_state = MDAState(next_place,
+                                 new_tests_on_ambulance,
+                                 new_tests_transfer_to_lab,
+                                 new_nr_matoshim,
+                                 new_visited_labs)
             yield OperatorResult(new_state, self.get_operator_cost(state_to_expand, new_state), name)
 
     def get_operator_cost(self, prev_state: MDAState, succ_state: MDAState) -> MDACost:
@@ -280,9 +284,9 @@ class MDAProblem(GraphProblem):
         lab_test_transfer_cost = is_lab_indicator * succ_state.current_site.tests_transfer_cost
         lab_revisit_cost = is_lab_indicator * succ_state.current_site.revisit_extra_cost
         active_fridges = math.ceil(
-           succ_state.get_total_nr_tests_taken_and_stored_on_ambulance() / self.problem_input.ambulance.fridge_capacity)
-        fridges_gas_consumption_per_meter = sum(
-            self.problem_input.ambulance.fridges_gas_consumption_liter_per_meter[:active_fridges])
+            succ_state.get_total_nr_tests_taken_and_stored_on_ambulance() / self.problem_input.ambulance.fridge_capacity)
+        fridges_gas_consumption_per_meter = sum(  # TODO: check the index - #active_fridges or #active_fridges-1
+            self.problem_input.ambulance.fridges_gas_consumption_liter_per_meter[:active_fridges - 1])
 
         # costs
         distance_cost = self.map_distance_finder.get_map_cost_between(prev_state.current_site, succ_state.current_site)
