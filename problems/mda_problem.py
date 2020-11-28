@@ -274,11 +274,12 @@ class MDAProblem(GraphProblem):
             You might find this tip useful for summing a slice of a collection.
         """
 
-        # helper local variables
         is_succ_laboratory = isinstance(succ_state.current_site, Laboratory)
-        src_junc = prev_state.current_site.location
-        trgt_junc = succ_state.current_site.location
-
+        is_prev_laboratory = isinstance(prev_state.current_site, Laboratory)
+        is_succ_apartment = isinstance(succ_state.current_site, ApartmentWithSymptomsReport)
+        is_prev_apartment = isinstance(prev_state.current_site, ApartmentWithSymptomsReport)
+        src_junc = prev_state.current_site if not is_prev_laboratory and not is_prev_apartment else prev_state.current_site.location
+        trgt_junc = succ_state.current_site if not is_succ_laboratory and not is_succ_apartment else succ_state.current_site.location
         # Indicators
         is_lab_indicator = 1 if is_succ_laboratory else 0
         is_visited_lab_indicator = 1 if is_lab_indicator == 1 and succ_state.visited_labs.__contains__(
