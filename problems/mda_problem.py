@@ -249,7 +249,8 @@ class MDAProblem(GraphProblem):
                 # check if we can apply apartment operator
                 if next_apartment not in self.get_reported_apartments_waiting_to_visit(state_to_expand) or \
                         state_to_expand.get_total_nr_tests_taken_and_stored_on_ambulance() + next_apartment.nr_roommates > \
-                        self.problem_input.ambulance.total_fridges_capacity:
+                        self.problem_input.ambulance.total_fridges_capacity or next_apartment.nr_roommates > \
+                        state_to_expand.nr_matoshim_on_ambulance:
                     continue
                 name = 'visit ' + next_apartment.reporter_name
                 new_tests_on_ambulance = state_to_expand.tests_on_ambulance | {next_apartment}
@@ -258,16 +259,17 @@ class MDAProblem(GraphProblem):
                 name = None
                 new_tests_on_ambulance = state_to_expand.tests_on_ambulance
                 new_nr_matoshim = state_to_expand.nr_matoshim_on_ambulance
+
             new_visited_labs = state_to_expand.visited_labs if not is_laboratory else \
                 state_to_expand.visited_labs | {next_place}
             new_tests_transfer_to_lab = state_to_expand.tests_transferred_to_lab if not is_laboratory \
                 else state_to_expand.tests_on_ambulance | state_to_expand.tests_transferred_to_lab
 
-            new_state = MDAState(next_place,
-                                 new_tests_on_ambulance,
-                                 new_tests_transfer_to_lab,
-                                 new_nr_matoshim,
-                                 new_visited_labs)
+            new_state = MDAState(current_site=next_place,
+                                 tests_on_ambulance=new_tests_on_ambulance,
+                                 tests_transferred_to_lab=new_tests_transfer_to_lab,
+                                 nr_matoshim_on_ambulance=new_nr_matoshim,
+                                 visited_labs=new_visited_labs)
             yield OperatorResult(successor_state=new_state,
                                  operator_cost=self.get_operator_cost(state_to_expand, new_state),
                                  operator_name=name)
@@ -342,7 +344,7 @@ class MDAProblem(GraphProblem):
          In order to create a set from some other collection (list/tuple) you can just `set(some_other_collection)`.
         """
         assert isinstance(state, MDAState)
-        return isinstance(state.current_location, Laboratory) and not state.tests_on_ambulance and \
+        return isinstance(state.current_site, Laboratory) and len(state.tests_on_ambulance) == 0 and \
                state.tests_transferred_to_lab == set(self.problem_input.reported_apartments)
 
     def get_zero_cost(self) -> Cost:
