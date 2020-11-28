@@ -217,62 +217,31 @@ class MDAProblem(GraphProblem):
         """
 
         assert isinstance(state_to_expand, MDAState)
-        for outgoing_link in state_to_expand.current_site.outgoing_links:
-            next_place: Junction = self.streets_map.get(outgoing_link.target)
-            next_lab = None
-            next_apartment = None
-            is_laboratory = False
-            for lab in self.problem_input.laboratories:
-                if lab.location == next_place:
-                    is_laboratory = True
-                    next_lab = lab
-                    break
-
-            is_apartment = False
-            if not is_laboratory:
-                for apartment in self.problem_input.reported_apartments:
-                    if apartment.location == next_place:
-                        is_apartment = True
-                        next_apartment = apartment
-                        break
-
-            if is_laboratory:
-                assert next_lab is not None
-                # check if we can apply laboratory operator
-                if len(state_to_expand.tests_on_ambulance) is 0 and next_lab in state_to_expand.visited_labs:
-                    continue
-                name = 'go to lab ' + next_lab.name
-                new_tests_on_ambulance = frozenset()
-                new_nr_matoshim = state_to_expand.nr_matoshim_on_ambulance + next_lab.max_nr_matoshim
-            elif is_apartment:
-                assert next_apartment is not None
-                # check if we can apply apartment operator
-                if next_apartment not in self.get_reported_apartments_waiting_to_visit(state_to_expand) or \
-                        state_to_expand.get_total_nr_tests_taken_and_stored_on_ambulance() + next_apartment.nr_roommates > \
-                        self.problem_input.ambulance.total_fridges_capacity or next_apartment.nr_roommates > \
-                        state_to_expand.nr_matoshim_on_ambulance:
-                    continue
-                name = 'visit ' + next_apartment.reporter_name
-                new_tests_on_ambulance = state_to_expand.tests_on_ambulance | {next_apartment}
-                new_nr_matoshim = state_to_expand.nr_matoshim_on_ambulance - next_apartment.nr_roommates
-            else:
-                name = None
-                new_tests_on_ambulance = state_to_expand.tests_on_ambulance
-                new_nr_matoshim = state_to_expand.nr_matoshim_on_ambulance
-
-            new_visited_labs = state_to_expand.visited_labs if not is_laboratory else \
-                state_to_expand.visited_labs | {next_place}
-            new_tests_transfer_to_lab = state_to_expand.tests_transferred_to_lab if not is_laboratory \
-                else state_to_expand.tests_on_ambulance | state_to_expand.tests_transferred_to_lab
-
-            new_state = MDAState(current_site=next_place,
-                                 tests_on_ambulance=new_tests_on_ambulance,
-                                 tests_transferred_to_lab=new_tests_transfer_to_lab,
-                                 nr_matoshim_on_ambulance=new_nr_matoshim,
-                                 visited_labs=new_visited_labs)
+        for apartment in self.get_reported_apartments_waiting_to_visit(state_to_expand):
+            if apartment not in self.get_reported_apartments_waiting_to_visit(state_to_expand) or \
+                    state_to_expand.get_total_nr_tests_taken_and_stored_on_ambulance() + apartment.nr_roommates > \
+                    self.problem_input.ambulance.total_fridges_capacity or apartment.nr_roommates > \
+                    state_to_expand.nr_matoshim_on_ambulance:
+                continue
+            new_state = MDAState(current_site=apartment,
+                                 tests_on_ambulance=state_to_expand.tests_on_ambulance.union({apartment}),
+                                 tests_transferred_to_lab=state_to_expand.tests_transferred_to_lab,
+                                 nr_matoshim_on_ambulance=state_to_expand.nr_matoshim_on_ambulance - apartment.nr_roommates,
+                                 visited_labs=state_to_expand.visited_labs)
             yield OperatorResult(successor_state=new_state,
                                  operator_cost=self.get_operator_cost(state_to_expand, new_state),
-                                 operator_name=name)
+                                 operator_name='visit ' + apartment.reporter_name)
+        for lab in self.problem_input.laboratories:
+            if len(state_to_expand.tests_on_ambulance) == 0 and lab in state_to_expand.visited_labs:
+                continue
+            new_state = MDAState(current_site=lab,
+                                 tests_on_ambulance=frozenset(),
+                                 tests_transferred_to_lab=state_to_expand.tests_transferred_to_lab.union(state_to_expand.tests_on_ambulance),
+                                 nr_matoshim_on_ambulance=state_to_expand.nr_matoshim_on_ambulance + lab.max_nr_matoshim,
+                                 visited_labs=state_to_expand.visited_labs.union({lab}))
+            yield OperatorResult(successor_state=new_state,
+                                 operator_cost=self.get_operator_cost(state_to_expand, new_state),
+                                 operator_name='go to lab ' + lab.name)
 
     def get_operator_cost(self, prev_state: MDAState, succ_state: MDAState) -> MDACost:
         """
@@ -305,15 +274,20 @@ class MDAProblem(GraphProblem):
             You might find this tip useful for summing a slice of a collection.
         """
 
-        is_laboratory = isinstance(succ_state.current_site, Laboratory)
+        is_succ_laboratory = isinstance(succ_state.current_site, Laboratory)
+        is_prev_laboratory = isinstance(prev_state.current_site, Laboratory)
+        is_succ_apartment = isinstance(succ_state.current_site, ApartmentWithSymptomsReport)
+        is_prev_apartment = isinstance(prev_state.current_site, ApartmentWithSymptomsReport)
+        src_junc = prev_state.current_site if not is_prev_laboratory and not is_prev_apartment else prev_state.current_site.location
+        trgt_junc = succ_state.current_site if not is_succ_laboratory and not is_succ_apartment else succ_state.current_site.location
         # Indicators
-        is_lab_indicator = 1 if is_laboratory else 0
+        is_lab_indicator = 1 if is_succ_laboratory else 0
         is_visited_lab_indicator = 1 if is_lab_indicator == 1 and succ_state.visited_labs.__contains__(
             succ_state.current_site.location) else 0
         is_taken_not_empty_indicator = 1 if len(prev_state.tests_on_ambulance) > 0 else 0
 
         # helpers costs
-        if is_laboratory:
+        if is_succ_laboratory:
             lab_test_transfer_cost = is_lab_indicator * succ_state.current_site.tests_transfer_cost
             lab_revisit_cost = is_lab_indicator * succ_state.current_site.revisit_extra_cost
         else:
@@ -325,7 +299,7 @@ class MDAProblem(GraphProblem):
             self.problem_input.ambulance.fridges_gas_consumption_liter_per_meter[:active_fridges - 1])
 
         # costs
-        distance_cost = self.map_distance_finder.get_map_cost_between(prev_state.current_site, succ_state.current_site)
+        distance_cost = self.map_distance_finder.get_map_cost_between(src_junc, trgt_junc)
         if distance_cost is None:
             return MDACost(float('inf'), float('inf'), float('inf'))
         monetary_cost = self.problem_input.gas_liter_price * \
