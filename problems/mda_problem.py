@@ -224,7 +224,7 @@ class MDAProblem(GraphProblem):
                     state_to_expand.nr_matoshim_on_ambulance:
                 continue
             new_state = MDAState(current_site=apartment,
-                                 tests_on_ambulance=state_to_expand.tests_on_ambulance.union({apartment}),
+                                 tests_on_ambulance=state_to_expand.tests_on_ambulance | {apartment},
                                  tests_transferred_to_lab=state_to_expand.tests_transferred_to_lab,
                                  nr_matoshim_on_ambulance=state_to_expand.nr_matoshim_on_ambulance - apartment.nr_roommates,
                                  visited_labs=state_to_expand.visited_labs)
@@ -236,9 +236,9 @@ class MDAProblem(GraphProblem):
                 continue
             new_state = MDAState(current_site=lab,
                                  tests_on_ambulance=frozenset(),
-                                 tests_transferred_to_lab=state_to_expand.tests_transferred_to_lab.union(state_to_expand.tests_on_ambulance),
-                                 nr_matoshim_on_ambulance=state_to_expand.nr_matoshim_on_ambulance + lab.max_nr_matoshim,
-                                 visited_labs=state_to_expand.visited_labs.union({lab}))
+                                 tests_transferred_to_lab=state_to_expand.tests_transferred_to_lab | state_to_expand.tests_on_ambulance,
+                                 nr_matoshim_on_ambulance=state_to_expand.nr_matoshim_on_ambulance + lab.max_nr_matoshim if lab not in state_to_expand.visited_labs else state_to_expand.nr_matoshim_on_ambulance,
+                                 visited_labs=state_to_expand.visited_labs | {lab})
             yield OperatorResult(successor_state=new_state,
                                  operator_cost=self.get_operator_cost(state_to_expand, new_state),
                                  operator_name='go to lab ' + lab.name)
@@ -274,20 +274,14 @@ class MDAProblem(GraphProblem):
             You might find this tip useful for summing a slice of a collection.
         """
 
-        is_succ_laboratory = isinstance(succ_state.current_site, Laboratory)
-        is_prev_laboratory = isinstance(prev_state.current_site, Laboratory)
-        is_succ_apartment = isinstance(succ_state.current_site, ApartmentWithSymptomsReport)
-        is_prev_apartment = isinstance(prev_state.current_site, ApartmentWithSymptomsReport)
-        src_junc = prev_state.current_site if not is_prev_laboratory and not is_prev_apartment else prev_state.current_site.location
-        trgt_junc = succ_state.current_site if not is_succ_laboratory and not is_succ_apartment else succ_state.current_site.location
         # Indicators
-        is_lab_indicator = 1 if is_succ_laboratory else 0
+        is_lab_indicator = 1 if isinstance(succ_state.current_site, Laboratory) else 0
         is_visited_lab_indicator = 1 if is_lab_indicator == 1 and succ_state.visited_labs.__contains__(
             succ_state.current_site.location) else 0
         is_taken_not_empty_indicator = 1 if len(prev_state.tests_on_ambulance) > 0 else 0
 
         # helpers costs
-        if is_succ_laboratory:
+        if isinstance(succ_state.current_site, Laboratory):
             lab_test_transfer_cost = is_lab_indicator * succ_state.current_site.tests_transfer_cost
             lab_revisit_cost = is_lab_indicator * succ_state.current_site.revisit_extra_cost
         else:
@@ -295,11 +289,11 @@ class MDAProblem(GraphProblem):
             lab_revisit_cost = 0
         active_fridges = math.ceil(prev_state.get_total_nr_tests_taken_and_stored_on_ambulance() /
                                    self.problem_input.ambulance.fridge_capacity)
-        fridges_gas_consumption_per_meter = sum(  # TODO: check the index - #active_fridges or #active_fridges-1
-            self.problem_input.ambulance.fridges_gas_consumption_liter_per_meter[:active_fridges - 1])
+        fridges_gas_consumption_per_meter = sum(
+            self.problem_input.ambulance.fridges_gas_consumption_liter_per_meter[:active_fridges])
 
         # costs
-        distance_cost = self.map_distance_finder.get_map_cost_between(src_junc, trgt_junc)
+        distance_cost = self.map_distance_finder.get_map_cost_between(prev_state.current_location, succ_state.current_location)
         if distance_cost is None:
             return MDACost(float('inf'), float('inf'), float('inf'))
         monetary_cost = self.problem_input.gas_liter_price * \
