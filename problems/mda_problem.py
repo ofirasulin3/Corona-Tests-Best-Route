@@ -237,7 +237,9 @@ class MDAProblem(GraphProblem):
             new_state = MDAState(current_site=lab,
                                  tests_on_ambulance=frozenset(),
                                  tests_transferred_to_lab=state_to_expand.tests_transferred_to_lab | state_to_expand.tests_on_ambulance,
-                                 nr_matoshim_on_ambulance=state_to_expand.nr_matoshim_on_ambulance + lab.max_nr_matoshim if lab not in state_to_expand.visited_labs else state_to_expand.nr_matoshim_on_ambulance,
+                                 nr_matoshim_on_ambulance=state_to_expand.nr_matoshim_on_ambulance +
+                                                          lab.max_nr_matoshim if lab not in state_to_expand.visited_labs
+                                                          else state_to_expand.nr_matoshim_on_ambulance,
                                  visited_labs=state_to_expand.visited_labs | {lab})
             yield OperatorResult(successor_state=new_state,
                                  operator_cost=self.get_operator_cost(state_to_expand, new_state),
