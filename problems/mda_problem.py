@@ -73,7 +73,7 @@ class MDAState(GraphProblemState):
         """
         assert isinstance(other, MDAState)
 
-        # TODO [Ex.17]: Complete the implementation of this method!
+        #  [Ex.17]: Complete the implementation of this method!
         #  Note that you can simply compare two instances of `Junction` type
         #   (using equals `==` operator) because the class `Junction` explicitly
         #   implements the `__eq__()` method. The types `frozenset`, `ApartmentWithSymptomsReport`, `Laboratory`
@@ -98,7 +98,7 @@ class MDAState(GraphProblemState):
     def get_total_nr_tests_taken_and_stored_on_ambulance(self) -> int:
         """
         This method returns the total number of of tests that are stored on the ambulance in this state.
-        TODO [Ex.17]: Implement this method.
+         [Ex.17]: Implement this method.
          Notice that this method can be implemented using a single line of code - do so!
          Use python's built-it `sum()` function.
          Notice that `sum()` can receive an *ITERATOR* as argument; That is, you can simply write something like this:
@@ -188,7 +188,7 @@ class MDAProblem(GraphProblem):
 
     def expand_state_with_costs(self, state_to_expand: GraphProblemState) -> Iterator[OperatorResult]:
         """
-        TODO [Ex.17]: Implement this method!
+         [Ex.17]: Implement this method!
         This method represents the `Succ: S -> P(S)` function of the MDA problem.
         The `Succ` function is defined by the problem operators as shown in class.
         The MDA problem operators are defined in the assignment instructions.
@@ -250,7 +250,7 @@ class MDAProblem(GraphProblem):
         Calculates the operator cost (of type `MDACost`) of an operator (moving from the `prev_state`
          to the `succ_state`). The `MDACost` type is defined above in this file (with explanations).
         Use the formal MDA problem's operator costs definition presented in the assignment-instructions.
-        TODO [Ex.17]: implement this method!
+         [Ex.17]: implement this method!
         Use the method `self.map_distance_finder.get_map_cost_between()` to calculate the distance
          between two junctions. This distance is used for calculating the 3 costs.
         If the location of the next state is not reachable (on the streets-map) from the location of
@@ -309,7 +309,7 @@ class MDAProblem(GraphProblem):
     def is_goal(self, state: GraphProblemState) -> bool:
         """
         This method receives a state and returns whether this state is a goal.
-        TODO [Ex.17]: implement this method using a single `return` line!
+         [Ex.17]: implement this method using a single `return` line!
          Use sets/frozensets comparison (`some_set == some_other_set`).
          In order to create a set from some other collection (list/tuple) you can just `set(some_other_collection)`.
         """
@@ -331,7 +331,7 @@ class MDAProblem(GraphProblem):
         This method returns a list of all reported-apartments that haven't been visited yet.
         For the sake of determinism considerations, the returned list has to be sorted by
          the apartment's report id in an ascending order.
-        TODO [Ex.17]: Implement this method.
+         [Ex.17]:
             Use sets difference operation (`some_set - some_other_set`).
             Use `list(some_set)` to create a list from some given set, and then use
                 `some_list_instance.sort(key=...)` to sort this list. Use a `lambda`
@@ -343,12 +343,6 @@ class MDAProblem(GraphProblem):
             Note: This method can be implemented using a single line of code. Try to do so.
         """
 
-        # initial = set(self.problem_input.reported_apartments)
-        # to_remove1 = set(state.tests_transferred_to_lab)
-        # to_remove2 = set(state.tests_on_ambulance)
-        # to_list = list(initial - to_remove1 - to_remove2)
-        # to_list.sort(key=lambda a: ApartmentWithSymptomsReport.report_id)
-        # return to_list
         waiting_to_visit = list(set(self.problem_input.reported_apartments) - set(state.tests_transferred_to_lab) -
                                 set(state.tests_on_ambulance))
         waiting_to_visit.sort(key=lambda a: a.report_id)
@@ -364,4 +358,9 @@ class MDAProblem(GraphProblem):
             Use the method `self.get_reported_apartments_waiting_to_visit(state)`.
             Use python's `sorted(some_list, key=...)` function.
         """
-        raise NotImplementedError  # TODO: remove this line!
+        remaining_locations = self.get_reported_apartments_waiting_to_visit(state)
+        remaining_junctions = []
+        for item in remaining_locations:
+            remaining_junctions.append(item.location)
+        remaining_junctions.append(state.current_location)
+        return sorted(remaining_junctions, key=lambda a: a.index)

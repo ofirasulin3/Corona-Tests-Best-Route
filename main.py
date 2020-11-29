@@ -157,7 +157,7 @@ def get_mda_problem(
     assert problem_input_size in {'small', 'moderate', 'big'}
     if problem_input_size not in loaded_problem_inputs_by_size:
         loaded_problem_inputs_by_size[problem_input_size] = MDAProblemInput.load_from_file(
-            f'{problem_input_size}_MDA.in', streets_map)
+            f'{problem_input_size}_mda.in', streets_map)
     problem = MDAProblem(
         problem_input=loaded_problem_inputs_by_size[problem_input_size],
         streets_map=streets_map,
@@ -191,6 +191,9 @@ def mda_problem_with_astar_experiments():
     # Ex.22
     # create an instance of `AStar` with the `MDAMaxAirDistHeuristic`,
     #       solve the `moderate_mda_problem_with_distance_cost` with it and print the results.
+    astar_mda = AStar(MDAMaxAirDistHeuristic)
+    res = astar_mda.solve_problem(moderate_mda_problem_with_distance_cost)
+    print(res)
     exit()  # TODO: remove!
 
     # Ex.25
@@ -317,7 +320,7 @@ def mda_problem_anytime_astar_experiments():
 def run_all_experiments():
     print('Running all experiments')
     # toy_map_problem_experiments()
-    basic_mda_problem_experiments()
+    # basic_mda_problem_experiments()
     mda_problem_with_astar_experiments()
     mda_problem_with_weighted_astar_experiments()
     monetary_cost_objectives_mda_problem_experiments()
