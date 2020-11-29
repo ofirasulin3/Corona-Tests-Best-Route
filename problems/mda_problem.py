@@ -236,7 +236,8 @@ class MDAProblem(GraphProblem):
                 continue
             new_state = MDAState(current_site=lab,
                                  tests_on_ambulance=frozenset(),
-                                 tests_transferred_to_lab=state_to_expand.tests_transferred_to_lab | state_to_expand.tests_on_ambulance,
+                                 tests_transferred_to_lab=state_to_expand.tests_transferred_to_lab |
+                                                          state_to_expand.tests_on_ambulance,
                                  nr_matoshim_on_ambulance=state_to_expand.nr_matoshim_on_ambulance +
                                                           lab.max_nr_matoshim if lab not in state_to_expand.visited_labs
                                                           else state_to_expand.nr_matoshim_on_ambulance,
@@ -277,22 +278,13 @@ class MDAProblem(GraphProblem):
         """
 
         # Indicators
-        is_lab_indicator = 1 if isinstance(succ_state.current_site, Laboratory) else 0
-        is_visited_lab_indicator = 1 if is_lab_indicator == 1 and succ_state.visited_labs.__contains__(
-            succ_state.current_site.location) else 0
-        is_taken_not_empty_indicator = 1 if len(prev_state.tests_on_ambulance) > 0 else 0
+        is_lab = isinstance(succ_state.current_site, Laboratory)
+        is_visited_lab = succ_state.current_site in prev_state.visited_labs
+        is_taken_not_empty = len(prev_state.tests_on_ambulance) > 0
 
         # helpers costs
-        if isinstance(succ_state.current_site, Laboratory):
-            lab_test_transfer_cost = is_lab_indicator * succ_state.current_site.tests_transfer_cost
-            lab_revisit_cost = is_lab_indicator * succ_state.current_site.revisit_extra_cost
-        else:
-            lab_test_transfer_cost = 0
-            lab_revisit_cost = 0
-        active_fridges = math.ceil(prev_state.get_total_nr_tests_taken_and_stored_on_ambulance() /
-                                   self.problem_input.ambulance.fridge_capacity)
-        fridges_gas_consumption_per_meter = sum(
-            self.problem_input.ambulance.fridges_gas_consumption_liter_per_meter[:active_fridges])
+        lab_test_transfer_cost = succ_state.current_site.tests_transfer_cost if is_lab else 0
+        lab_revisit_cost = succ_state.current_site.revisit_extra_cost if is_lab else 0
 
         # costs
         distance_cost = self.map_distance_finder.get_map_cost_between(prev_state.current_location, succ_state.current_location)
@@ -300,11 +292,16 @@ class MDAProblem(GraphProblem):
             return MDACost(float('inf'), float('inf'), float('inf'))
         monetary_cost = self.problem_input.gas_liter_price * \
                         (self.problem_input.ambulance.drive_gas_consumption_liter_per_meter +
-                         fridges_gas_consumption_per_meter) * distance_cost + \
-                        is_lab_indicator * (is_taken_not_empty_indicator * lab_test_transfer_cost +
-                                            is_visited_lab_indicator * lab_revisit_cost)
+                         self.fridges_gas_consumption_per_meter(prev_state)) * distance_cost
+        if is_lab:
+            monetary_cost += is_taken_not_empty * lab_test_transfer_cost + is_visited_lab * lab_revisit_cost
         test_travel_cost = distance_cost * prev_state.get_total_nr_tests_taken_and_stored_on_ambulance()
         return MDACost(distance_cost, monetary_cost, test_travel_cost, self.optimization_objective)
+
+    def fridges_gas_consumption_per_meter(self, state: MDAState):
+        active_fridges = math.ceil(state.get_total_nr_tests_taken_and_stored_on_ambulance() /
+                                   self.problem_input.ambulance.fridge_capacity)
+        return sum(self.problem_input.ambulance.fridges_gas_consumption_liter_per_meter[:active_fridges])
 
     def is_goal(self, state: GraphProblemState) -> bool:
         """
