@@ -303,6 +303,10 @@ class MDAProblem(GraphProblem):
                                    self.problem_input.ambulance.fridge_capacity)
         return sum(self.problem_input.ambulance.fridges_gas_consumption_liter_per_meter[:active_fridges])
 
+
+
+
+
     def is_goal(self, state: GraphProblemState) -> bool:
         """
         This method receives a state and returns whether this state is a goal.

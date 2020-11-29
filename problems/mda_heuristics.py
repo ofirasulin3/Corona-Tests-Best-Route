@@ -26,7 +26,7 @@ class MDAMaxAirDistHeuristic(HeuristicFunction):
          junctions in the remaining ambulance path. We don't consider laboratories here because we
          do not know what laboratories would be visited in an optimal solution.
 
-        TODO [Ex.21]:
+         [Ex.21]:
             Calculate the `total_distance_lower_bound` by taking the maximum over the group
                 {airDistanceBetween(j1,j2) | j1,j2 in CertainJunctionsInRemainingAmbulancePath s.t. j1 != j2}
             Notice: The problem is accessible via the `self.problem` field.
@@ -93,8 +93,6 @@ class MDASumAirDistHeuristic(HeuristicFunction):
 
         if len(all_certain_junctions_in_remaining_ambulance_path) < 2:
             return 0
-
-        raise NotImplementedError  # TODO: remove this line and complete the missing part here!
 
 
 class MDAMSTAirDistHeuristic(HeuristicFunction):
