@@ -26,7 +26,7 @@ class MDAMaxAirDistHeuristic(HeuristicFunction):
          junctions in the remaining ambulance path. We don't consider laboratories here because we
          do not know what laboratories would be visited in an optimal solution.
 
-         [Ex.21]:
+        TODO [Ex.21]:
             Calculate the `total_distance_lower_bound` by taking the maximum over the group
                 {airDistanceBetween(j1,j2) | j1,j2 in CertainJunctionsInRemainingAmbulancePath s.t. j1 != j2}
             Notice: The problem is accessible via the `self.problem` field.
@@ -93,6 +93,49 @@ class MDASumAirDistHeuristic(HeuristicFunction):
 
         if len(all_certain_junctions_in_remaining_ambulance_path) < 2:
             return 0
+
+        all_certain_junctions_in_remaining_ambulance_path_copy = list.copy(
+            self.problem.get_all_certain_junctions_in_remaining_ambulance_path(state))
+        curr_junct = state.current_location
+        next_edge = (float('inf'), float('inf'))
+        air_dist_sum = 0
+        air_dist = 0
+        all_certain_junctions_in_remaining_ambulance_path_copy.remove(curr_junct)
+        curr_min_junc = all_certain_junctions_in_remaining_ambulance_path_copy[0]
+        while all_certain_junctions_in_remaining_ambulance_path_copy:
+            for junc in all_certain_junctions_in_remaining_ambulance_path_copy:
+                air_dist = self.cached_air_distance_calculator.get_air_distance_between_junctions(curr_junct, junc)
+                if (air_dist, junc.index) < next_edge:
+                    next_edge = (air_dist, junc.index)
+                    curr_min_junc = junc
+            air_dist_sum += air_dist
+            curr_junct = curr_min_junc
+            next_edge = (float('inf'), float('inf'))
+            all_certain_junctions_in_remaining_ambulance_path_copy.remove(curr_junct)
+
+        return air_dist_sum
+
+        # junction_index_list = list((j, j.index) for j in all_certain_junctions_in_remaining_ambulance_path)
+        #
+        # sum = 0
+        # while (x := l.pop(0)):
+        #     l.insert(0, l.pop(min(l, key=lambda y: f(x, y)))
+        #     sum += f(x, l[0])
+        #
+        # while all_certain_junctions_in_remaining_ambulance_path:
+        #     for jnct in all_certain_junctions_in_remaining_ambulance_path:
+        #         air_dist = self.cached_air_distance_calculator.get_air_distance_between_junctions(curr_junct, jnct)
+        #         (min_val, jnctn) = (air_dist, jnct.index) if min_val > air_dist else min_val
+        #
+        #     curr_junct =
+        #     air_dist_sum += min( self.cached_air_distance_calculator.get_air_distance_between_junctions(j1, j2))
+        #
+        # indx_list = list(jnctn.index for jnctn in all_certain_junctions_in_remaining_ambulance_path)
+        # for (jnctn, indx) in (all_certain_junctions_in_remaining_ambulance_path, indx_list):
+        # (self.cached_air_distance_calculator.get_air_distance_between_junctions(j1, j2))
+        # list((jnctn, indx)
+        #      for jnctn in all_certain_junctions_in_remaining_ambulance_path
+        #      for indx)
 
 
 class MDAMSTAirDistHeuristic(HeuristicFunction):
