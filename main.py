@@ -87,11 +87,9 @@ def run_astar_for_weights_in_range(heuristic_type: HeuristicFunctionType, proble
     weights_array = np.linspace(low_heuristic_weight, high_heuristic_weight, n)
     costs_list = []
     expanded_numbers_list = []
-    counter = 0
     for weight in weights_array:
         wa_instance = AStar(heuristic_type, weight, max_nr_states_to_expand)
         result = wa_instance.solve_problem(problem)
-        counter = counter + 1
         if result.is_solution_found:
             costs_list.append(result.solution_g_cost)
             expanded_numbers_list.append(result.nr_expanded_states)
