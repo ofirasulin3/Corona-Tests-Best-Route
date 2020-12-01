@@ -51,7 +51,11 @@ class AStar(BestFirstSearch):
         """
 
         return (1 - self.heuristic_weight) * search_node.g_cost + \
-        self.heuristic_weight * self.heuristic_function.estimate(search_node.state) if self.heuristic_function.estimate(search_node.state) != 0 else (1 - self.heuristic_weight) * search_node.g_cost
+        self.heuristic_weight * self.heuristic_function.estimate(search_node.state) \
+            if self.heuristic_function.estimate(search_node.state) != 0 \
+            else (1 - self.heuristic_weight) * search_node.g_cost
+
+        # return (1-self.heuristic_weight)*search_node.g_cost+self.heuristic_weight*self.heuristic_function.estimate(search_node.state)
 
 
     def _open_successor_node(self, problem: GraphProblem, successor_node: SearchNode):
@@ -75,16 +79,20 @@ class AStar(BestFirstSearch):
         """
 
         # new_g = successor_node.parent_search_node.g_cost + successor_node.operator_cost
+        successor_g = successor_node.g_cost
+
         if self.open.has_state(successor_node.state):
             node_with_same_state = self.open.get_node_by_state(successor_node.state)
             # if new_g < successor_node.g_cost:
-            if node_with_same_state.expanding_priority > successor_node.expanding_priority:
+            # if node_with_same_state.expanding_priority > successor_node.expanding_priority:
+            if node_with_same_state.g_cost > successor_g:
                 self.open.extract_node(node_with_same_state)
 
         elif self.close.has_state(successor_node.state):
             node_with_same_state = self.close.get_node_by_state(successor_node.state)
             # if new_g < node_with_same_state.g_cost:
-            if node_with_same_state.expanding_priority > successor_node.expanding_priority:
+            # if node_with_same_state.expanding_priority > successor_node.expanding_priority:
+            if node_with_same_state.g_cost > successor_g:
                 self.close.remove_node(node_with_same_state)
 
         if not self.open.has_state(successor_node.state) and not self.close.has_state(successor_node.state):

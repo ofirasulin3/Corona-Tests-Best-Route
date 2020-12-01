@@ -99,7 +99,6 @@ class MDASumAirDistHeuristic(HeuristicFunction):
         curr_junct = state.current_location
         next_edge = (float('inf'), float('inf'))
         air_dist_sum = 0
-        air_dist = 0
         all_certain_junctions_in_remaining_ambulance_path_copy.remove(curr_junct)
         curr_min_junc = all_certain_junctions_in_remaining_ambulance_path_copy[0]
         while all_certain_junctions_in_remaining_ambulance_path_copy:
@@ -112,7 +111,6 @@ class MDASumAirDistHeuristic(HeuristicFunction):
             curr_junct = curr_min_junc
             next_edge = (float('inf'), float('inf'))
             all_certain_junctions_in_remaining_ambulance_path_copy.remove(curr_junct)
-
         return air_dist_sum
 
 
