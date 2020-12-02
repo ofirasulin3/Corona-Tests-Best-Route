@@ -155,7 +155,7 @@ def get_mda_problem(
     assert problem_input_size in {'small', 'moderate', 'big'}
     if problem_input_size not in loaded_problem_inputs_by_size:
         loaded_problem_inputs_by_size[problem_input_size] = MDAProblemInput.load_from_file(
-            f'{problem_input_size}_mda.in', streets_map)
+            f'{problem_input_size}_MDA.in', streets_map)
     problem = MDAProblem(
         problem_input=loaded_problem_inputs_by_size[problem_input_size],
         streets_map=streets_map,
@@ -260,16 +260,16 @@ def multiple_objectives_mda_problem_experiments():
     # Ex.35
     # create an instance of `AStar` with the `MDATestsTravelDistToNearestLabHeuristic`,
     #       solve the `moderate_mda_problem_with_tests_travel_dist_cost` with it and print the results.
-    astar_mda = AStar(MDATestsTravelDistToNearestLabHeuristic)
-    res = astar_mda.solve_problem(moderate_mda_problem_with_tests_travel_dist_cost)
-    print(res)
+    # astar_mda = AStar(MDATestsTravelDistToNearestLabHeuristic)
+    # res = astar_mda.solve_problem(moderate_mda_problem_with_tests_travel_dist_cost)
+    # print(res)
 
     # Ex.38
     # TODO: Implement the algorithm A_2 described in this exercise in the assignment instructions.
-    #       Create an instance of `AStar` with the `MDAMSTAirDistHeuristic`.
-    #       Solve the `moderate_mda_problem_with_distance_cost` with it and store the solution's (optimal)
-    #         distance cost to the variable `optimal_distance_cost`.
-    #       Calculate the value (1 + eps) * optimal_distance_cost in the variable `max_distance_cost` (for eps=0.6).
+    #       Create an instance of `AStar` with the `MDAMSTAirDistHeuristic`.#
+    #       Solve the `moderate_mda_problem_with_distance_cost` with it and store the solution's (optimal)#
+    #         distance cost to the variable `optimal_distance_cost`.#
+    #       Calculate the value (1 + eps) * optimal_distance_cost in the variable `max_distance_cost` (for eps=0.6).#
     #       Create another instance of `AStar` with the `MDATestsTravelDistToNearestLabHeuristic`, and specify the
     #          param `open_criterion` (to AStar c'tor) to be the criterion mentioned in the A_2 algorithm in the
     #          assignment instructions. Use a lambda function for that. This function should receive a `node` and
@@ -279,7 +279,16 @@ def multiple_objectives_mda_problem_experiments():
     #          previous parameters with their default values and pass an argument to a parameter that is positioned
     #          elsewhere next.
     #       Solve the `moderate_mda_problem_with_tests_travel_dist_cost` with it and print the results.
-    exit()  # TODO: remove!
+    eps = 0.6
+    astar_mda_mst_air_dist = AStar(MDAMSTAirDistHeuristic)
+    optimal_distance_cost = astar_mda_mst_air_dist.solve_problem(moderate_mda_problem_with_distance_cost) # equiv to C*dist
+    assert(isinstance(optimal_distance_cost.solution_cost, ExtendedCost))
+    max_distance_cost = (1 + eps) * optimal_distance_cost.solution_cost.distance_cost
+    astar_mda_travel_dist = AStar(MDATestsTravelDistToNearestLabHeuristic,
+                                  open_criterion=lambda node: node.cost.distance_cost <= max_distance_cost)
+                                  # open_criterion=lambda node: sum(x.cost for x in node.make_states_path()) <= max_distance_cost)
+    res = astar_mda_travel_dist.solve_problem(moderate_mda_problem_with_tests_travel_dist_cost)
+    print(res)
 
 
 def mda_problem_with_astar_epsilon_experiments():
@@ -332,8 +341,8 @@ def run_all_experiments():
     # mda_problem_with_weighted_astar_experiments()
     # monetary_cost_objectives_mda_problem_experiments()
     multiple_objectives_mda_problem_experiments()
-    mda_problem_with_astar_epsilon_experiments()
-    mda_problem_anytime_astar_experiments()
+    # mda_problem_with_astar_epsilon_experiments()
+    # mda_problem_anytime_astar_experiments()
 
 
 if __name__ == '__main__':
