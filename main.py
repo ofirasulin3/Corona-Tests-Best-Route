@@ -265,7 +265,7 @@ def multiple_objectives_mda_problem_experiments():
     # print(res)
 
     # Ex.38
-    # TODO: Implement the algorithm A_2 described in this exercise in the assignment instructions.
+    # Implement the algorithm A_2 described in this exercise in the assignment instructions.
     #       Create an instance of `AStar` with the `MDAMSTAirDistHeuristic`.#
     #       Solve the `moderate_mda_problem_with_distance_cost` with it and store the solution's (optimal)#
     #         distance cost to the variable `optimal_distance_cost`.#
@@ -284,9 +284,8 @@ def multiple_objectives_mda_problem_experiments():
     optimal_distance_cost = astar_mda_mst_air_dist.solve_problem(moderate_mda_problem_with_distance_cost) # equiv to C*dist
     assert(isinstance(optimal_distance_cost.solution_cost, ExtendedCost))
     max_distance_cost = (1 + eps) * optimal_distance_cost.solution_cost.distance_cost
-    astar_mda_travel_dist = AStar(MDATestsTravelDistToNearestLabHeuristic,
+    astar_mda_travel_dist = AStar(heuristic_function_type=MDATestsTravelDistToNearestLabHeuristic,
                                   open_criterion=lambda node: node.cost.distance_cost <= max_distance_cost)
-                                  # open_criterion=lambda node: sum(x.cost for x in node.make_states_path()) <= max_distance_cost)
     res = astar_mda_travel_dist.solve_problem(moderate_mda_problem_with_tests_travel_dist_cost)
     print(res)
 
