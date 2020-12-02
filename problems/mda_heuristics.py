@@ -191,6 +191,7 @@ class MDATestsTravelDistToNearestLabHeuristic(HeuristicFunction):
             """
             Returns the distance between `junction` and the laboratory that is closest to `junction`.
             """
-            return min(...)  # TODO: replace `...` with the relevant implementation.
+            return min(self.cached_air_distance_calculator.get_air_distance_between_junctions(junction, lab.location)
+                        for lab in MDAProblem(self).problem_input.laboratories)
 
         raise NotImplementedError  # TODO: remove this line!

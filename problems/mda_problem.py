@@ -287,7 +287,8 @@ class MDAProblem(GraphProblem):
         lab_revisit_cost = succ_state.current_site.revisit_extra_cost if is_lab else 0
 
         # costs
-        distance_cost = self.map_distance_finder.get_map_cost_between(prev_state.current_location, succ_state.current_location)
+        distance_cost = self.map_distance_finder.get_map_cost_between(prev_state.current_location,
+                                                                      succ_state.current_location)
         if distance_cost is None:
             return MDACost(float('inf'), float('inf'), float('inf'))
         monetary_cost = self.problem_input.gas_liter_price * \
@@ -302,10 +303,6 @@ class MDAProblem(GraphProblem):
         active_fridges = math.ceil(state.get_total_nr_tests_taken_and_stored_on_ambulance() /
                                    self.problem_input.ambulance.fridge_capacity)
         return sum(self.problem_input.ambulance.fridges_gas_consumption_liter_per_meter[:active_fridges])
-
-
-
-
 
     def is_goal(self, state: GraphProblemState) -> bool:
         """
@@ -355,7 +352,7 @@ class MDAProblem(GraphProblem):
         This includes the ambulance's current location, and the locations of the reported apartments
          that hasn't been visited yet.
         The list should be ordered by the junctions index ascendingly (small to big).
-        TODO [Ex.21]: Implement this method.
+        [Ex.21]: Implement this method.
             Use the method `self.get_reported_apartments_waiting_to_visit(state)`.
             Use python's `sorted(some_list, key=...)` function.
         """
