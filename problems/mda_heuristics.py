@@ -155,7 +155,7 @@ class MDAMSTAirDistHeuristic(HeuristicFunction):
             for j2 in junctions:
                 if j1 != j2 and (j2, j1) not in g.edges:
                     g.add_edge(j1.index, j2.index,
-                                 weight=self.cached_air_distance_calculator.get_air_distance_between_junctions(j1, j2))
+                               weight=self.cached_air_distance_calculator.get_air_distance_between_junctions(j1, j2))
         mst = nx.minimum_spanning_tree(g)
         return mst.size(weight='weight')
 
@@ -175,12 +175,12 @@ class MDATestsTravelDistToNearestLabHeuristic(HeuristicFunction):
         The main observation is that driving from a laboratory to a reported-apartment does not increase the
          tests-travel-distance cost. So the best case (lowest cost) is when we go to the closest laboratory right
          after visiting any reported-apartment.
-        If the ambulance currently stores tests, this total remained cost includes the #tests_on_ambulance times
+        If the ambulance currently stores tests, this total remained cost includes the #tests_on_ambulance *
          the distance from the current ambulance location to the closest lab.
         The rest part of the total remained cost includes the distance between each non-visited reported-apartment
-         and the closest lab (to this apartment) times the roommates in this apartment (as we take tests for all
+         and the closest lab (to this apartment) * the roommates in this apartment (as we take tests for all
          roommates).
-        TODO [Ex.33]:
+         [Ex.33]:
             Complete the implementation of this method.
             Use `self.problem.get_reported_apartments_waiting_to_visit(state)`.
         """
@@ -191,7 +191,12 @@ class MDATestsTravelDistToNearestLabHeuristic(HeuristicFunction):
             """
             Returns the distance between `junction` and the laboratory that is closest to `junction`.
             """
+            assert (isinstance(self.problem, MDAProblem))
             return min(self.cached_air_distance_calculator.get_air_distance_between_junctions(junction, lab.location)
-                        for lab in MDAProblem(self).problem_input.laboratories)
+                       for lab in self.problem.problem_input.laboratories)
 
-        raise NotImplementedError  # TODO: remove this line!
+        tests_travel_dist = state.get_total_nr_tests_taken_and_stored_on_ambulance() * \
+                            air_dist_to_closest_lab(state.current_location)
+        tests_travel_dist += sum(air_dist_to_closest_lab(apartment.location) * apartment.nr_roommates
+                                for apartment in self.problem.get_reported_apartments_waiting_to_visit(state))
+        return tests_travel_dist
