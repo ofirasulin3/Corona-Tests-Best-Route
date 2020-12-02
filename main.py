@@ -264,8 +264,6 @@ def multiple_objectives_mda_problem_experiments():
     res = astar_mda.solve_problem(moderate_mda_problem_with_tests_travel_dist_cost)
     print(res)
 
-    exit()  # TODO: remove!
-
     # Ex.38
     # TODO: Implement the algorithm A_2 described in this exercise in the assignment instructions.
     #       Create an instance of `AStar` with the `MDAMSTAirDistHeuristic`.
