@@ -39,14 +39,14 @@ class AStarEpsilon(AStar):
         Extracts the next node to expand from the open queue,
          by focusing on the current FOCAL and choosing the node
          with the best within_focal_priority from it.
-        TODO [Ex.42]: Implement this method!
+         [Ex.42]: Implement this method!
         Find the minimum expanding-priority value in the `open` queue.
         Calculate the maximum expanding-priority of the FOCAL, which is
          the min expanding-priority in open multiplied by (1 + eps) where
          eps is stored under `self.focal_epsilon`.
         Create the FOCAL by popping items from the `open` queue and inserting
-         them into a focal list. Don't forget to satisfy the constraint of
-         `self.max_focal_size` if it is set (not None).
+         them into a focal list.
+         Don't forget to satisfy the constraint of `self.max_focal_size` if it is set (not None).
         Notice: You might want to pop items from the `open` priority queue,
          and then choose an item out of these popped items. Don't forget:
          the other items have to be pushed back into open.
@@ -58,10 +58,10 @@ class AStarEpsilon(AStar):
          order (small to big). Popping / peeking `open` returns the node with
          the smallest `f`.
         For each node (candidate) in the created focal, calculate its priority
-         by callingthe function `self.within_focal_priority_function` on it.
+         by calling the function `self.within_focal_priority_function` on it.
          This function expects to get 3 values: the node, the problem and the
-         solver (self). You can create an array of these priority value. Then,
-         use `np.argmin()` to find the index of the item (within this array)
+         solver (self). You can create an array of these priority value.
+         Then, use `np.argmin()` to find the index of the item (within this array)
          with the minimal value. After having this index you could pop this
          item from the focal (at this index). This is the node that have to
          be eventually returned.
@@ -71,5 +71,33 @@ class AStarEpsilon(AStar):
          method should be kept in the open queue at the end of this method, except
          for the extracted (and returned) node.
         """
+        if self.open.is_empty():
+            return None
+        else:
+            open_min_exp_priority = self.open.peek_next_node().expanding_priority
+            focal_max_exp_priority = open_min_exp_priority * (1 + self.focal_epsilon)
+            focal = []
 
-        raise NotImplementedError  # TODO: remove!
+            focal_is_restricted = self.max_focal_size is not None
+            while (not self.open.is_empty() and
+                   (self.open.peek_next_node().expanding_priority <= focal_max_exp_priority)):
+                if focal_is_restricted and len(focal) >= self.max_focal_size:
+                    break
+                else:
+                    focal.append(self.open.pop_next_node())
+
+            focal_array = []
+            for node in focal:
+                focal_array.append(self.within_focal_priority_function(node, problem, self))
+
+            min_index = np.argmin(focal_array)
+
+            node_to_return = focal.pop(min_index)
+            self.close.add_node(node_to_return)
+            for node in focal:
+                self.open.push_node(node)
+
+            return node_to_return
+
+
+

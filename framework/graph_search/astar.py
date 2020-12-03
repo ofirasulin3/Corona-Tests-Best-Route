@@ -45,7 +45,7 @@ class AStar(BestFirstSearch):
         Should calculate and return the f-score of the given node.
         This score is used as a priority of this node in the open priority queue.
 
-        TODO [Ex.11]: implement this method.
+         [Ex.11]: implement this method.
         Remember: In Weighted-A* the f-score is defined by ((1-w) * cost) + (w * h(state)).
         Notice: You may use `search_node.g_cost`, `self.heuristic_weight`, and `self.heuristic_function`.
         """
@@ -63,7 +63,7 @@ class AStar(BestFirstSearch):
          node into the `self.open` priority queue, and may check the existence
          of another node representing the same state in `self.close`.
 
-        TODO [Ex.11]: implement this method.
+         [Ex.11]: implement this method.
         Have a look at the pseudo-code shown in class for A*. Here you should implement the same in python.
         Have a look at the implementation of `BestFirstSearch` to have better understanding.
         Use `self.open` (SearchNodesPriorityQueue) and `self.close` (SearchNodesCollection) data structures.
@@ -74,21 +74,15 @@ class AStar(BestFirstSearch):
         Remember: In A*, in contrast to uniform-cost, a successor state might have an already closed node,
                   but still could be improved.
         """
-
-        # new_g = successor_node.parent_search_node.g_cost + successor_node.operator_cost
         successor_g = successor_node.g_cost
 
         if self.open.has_state(successor_node.state):
             node_with_same_state = self.open.get_node_by_state(successor_node.state)
-            # if new_g < successor_node.g_cost:
-            # if node_with_same_state.expanding_priority > successor_node.expanding_priority:
             if node_with_same_state.g_cost > successor_g:
                 self.open.extract_node(node_with_same_state)
 
         elif self.close.has_state(successor_node.state):
             node_with_same_state = self.close.get_node_by_state(successor_node.state)
-            # if new_g < node_with_same_state.g_cost:
-            # if node_with_same_state.expanding_priority > successor_node.expanding_priority:
             if node_with_same_state.g_cost > successor_g:
                 self.close.remove_node(node_with_same_state)
 
