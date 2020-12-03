@@ -279,12 +279,9 @@ def multiple_objectives_mda_problem_experiments():
     #          previous parameters with their default values and pass an argument to a parameter that is positioned
     #          elsewhere next.
     #       Solve the `moderate_mda_problem_with_tests_travel_dist_cost` with it and print the results.
-    eps = 0.0001
+    eps = 0.6
     astar_mda_mst_air_dist = AStar(MDAMSTAirDistHeuristic)
     optimal_distance_cost = astar_mda_mst_air_dist.solve_problem(moderate_mda_problem_with_distance_cost) # equiv to C*dist
-    print('optimal_distance_cost')
-    print(optimal_distance_cost.solution_cost.distance_cost)
-    print()
     assert(isinstance(optimal_distance_cost.solution_cost, ExtendedCost))
     max_distance_cost = (1 + eps) * optimal_distance_cost.solution_cost.distance_cost
     astar_mda_travel_dist = AStar(heuristic_function_type=MDATestsTravelDistToNearestLabHeuristic,
