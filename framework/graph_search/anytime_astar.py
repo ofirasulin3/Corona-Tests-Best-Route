@@ -91,12 +91,12 @@ class AnytimeAStar(GraphProblemSolver):
                 res = astar.solve_problem(problem)
                 if res.is_solution_found:
                     high_heuristic_weight = curr_heur_w
-                    if res.solution_cost.distance_cost >= best_solution.solution_cost.distance_cost:
-                        continue
-                    else:
+                    if res.solution_g_cost <= best_solution.solution_g_cost:
                         best_solution = res
                 else:
                     low_heuristic_weight = curr_heur_w
+                total_nr_expanded_states += res.nr_expanded_states
+                max_nr_stored_states = max(max_nr_stored_states, res.max_nr_stored_states)
 
         self.solver_name = f'{self.__class__.solver_name} (h={best_solution.solver.heuristic_function.heuristic_name}, w={best_heuristic_weight:.3f})'
         return best_solution._replace(
